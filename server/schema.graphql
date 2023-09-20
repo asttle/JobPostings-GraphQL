@@ -11,6 +11,12 @@ type Company {
   jobs: [Job!]!
 }
 
+type Mutation {
+  createJob(input: CreateJobInput!): Job
+  deleteJob(id: ID!): Job
+  updateJob(input: UpdateJobInput!): Job
+}
+
 """
 Represents the job posted by the copany
 """
@@ -22,5 +28,16 @@ type Job {
   date: String!
   title: String!
   company: Company!
+  description: String
+}
+
+input CreateJobInput {
+  title: String!
+  description: String
+}
+
+input UpdateJobInput {
+  id: ID!
+  title: String!
   description: String
 }
