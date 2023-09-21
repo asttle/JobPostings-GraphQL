@@ -8,6 +8,7 @@ import {
   updateJob,
 } from "./db/jobs.js";
 import { getCompany } from "./db/companies.js";
+import { getUser } from "./db/users.js";
 
 export const resolvers = {
   Query: {
@@ -28,13 +29,39 @@ export const resolvers = {
     },
   },
   Mutation: {
-    createJob: (_root, { input: { title, description } }) => {
-      const companyId = "FjcJCHJALA4i";
-      return createJob({ companyId, title, description });
+    createJob: async (_root, { input: { title, description } }, { user }) => {
+      console.log(user);
+      if (!user) {
+        throw new authError("Unauthorized");
+      }
+      return createJob({ companyId: user.companyId, title, description });
     },
-    deleteJob: (_root, { id }) => deleteJob(id),
-    updateJob: (_root, { input: { id, title, description } }) =>
-      updateJob({ id, title, description }),
+    deleteJob: async (_root, { id }, { user }) => {
+      if (!user) {
+        throw new authError("Unauthorized");
+      }
+      const job = await deleteJob(id, user.companyId);
+      if (!job) {
+        throw new notFoundError("No job found with id" + id);
+      }
+      return job;
+    },
+    updateJob: async (
+      _root,
+      { input: { id, title, description } },
+      { user }
+    ) => {
+      if (!user) {
+        throw new authError("Unauthorized");
+      }
+      const job = updateJob({
+        id,
+        title,
+        description,
+        companyId: user.companyId,
+      });
+      return job;
+    },
   },
   Company: {
     jobs: (company) => getJobsByCompanyId(company.id),
@@ -49,6 +76,14 @@ function notFoundError(message) {
   return new GraphQLError(message, {
     extensions: {
       code: "NOT_FOUND",
+    },
+  });
+}
+
+function authError(message) {
+  return new GraphQLError(message, {
+    extensions: {
+      code: "AUTHORIZATION_ERROE",
     },
   });
 }
