@@ -1,7 +1,12 @@
 type Query {
-  jobs: [Job!]
+  jobs(limit: Int, offset: Int): JobSubList
   company(id: ID!): Company
   job(id: ID!): Job
+}
+
+type JobSubList {
+  items: [Job!]!
+  totalCount: Int!
 }
 
 type Company {

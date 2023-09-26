@@ -6,13 +6,17 @@ import {
   createJob,
   deleteJob,
   updateJob,
+  countJobs,
 } from "./db/jobs.js";
 import { getCompany } from "./db/companies.js";
-import { getUser } from "./db/users.js";
 
 export const resolvers = {
   Query: {
-    jobs: () => getJobs(),
+    jobs: async (_root, { limit, offset }) => {
+      const items = await getJobs(limit, offset);
+      const totalCount = await countJobs();
+      return { items, totalCount };
+    },
     job: async (_root, { id }) => {
       const job = await getJob(id);
       if (!job) {
@@ -67,7 +71,8 @@ export const resolvers = {
     jobs: (company) => getJobsByCompanyId(company.id),
   },
   Job: {
-    company: (job) => getCompany(job.companyId),
+    company: (job, _args, { companyLoader }) =>
+      companyLoader.load(job.companyId),
     date: (job) => toIsoDate(job.createdAt),
   },
 };
